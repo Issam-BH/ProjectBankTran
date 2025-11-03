@@ -20,7 +20,7 @@
         <label for="password">Password</label>
         <input type="password" name="_password" id="password" class="form-control" autocomplete="current-password" required>
         <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
-
+        <button id="show-password" type="button">Afficher le mot de passe</button>
         {#
             Uncomment this section and add a remember_me option below your firewall to activate remember me functionality.
             See https://symfony.com/doc/current/security/remember_me.html
@@ -35,4 +35,12 @@
             Sign in
         </button>
     </form>
+<script>
+const password = document.getElementById('password')
+const showPassword = document.getElementById('show-password')
+
+showPassword.addEventListener('click', () => {
+    password.type = password.type === 'password' ? 'text' : 'password'
+})
+</script>
 {% endblock %}
