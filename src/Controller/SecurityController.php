@@ -18,6 +18,17 @@ class SecurityController extends AbstractController
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
 
+        if ($this->isGranted("ROLE_ADMIN")) {
+            return $this->redirectToRoute("app_admin");
+        }
+        if ($this->isGranted("ROLE_PO")) {
+            return $this->redirectToRoute("app_product_owner");
+        }
+
+        if ($this->isGranted("ROLE_COMMERCANT")) {
+            return $this->redirectToRoute("app_commercant");
+        }
+
         return $this->render('security/login.html.twig', [
             'last_username' => $lastUsername,
             'error' => $error,
