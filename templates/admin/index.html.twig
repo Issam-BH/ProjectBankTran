@@ -20,7 +20,7 @@
             <option value="{{ req.id }}"
                 {% if selected and selected.id == req.id %}selected{% endif %}
             >
-                {{ req.username }} — {{ req.action.value }}
+                {{ req.username }} — {{ req.action }}
             </option>
         {% endfor %}
     </select>
@@ -40,10 +40,10 @@
     <input type="password" name="password" value="{{ selected.password }}" required><br><br>
 
     <label>Action :</label><br>
-    <input type="text" name="action" value="{{ selected.action.value }}" readonly><br><br>
+    <input type="text" name="action" value="{{ selected.action }}" readonly><br><br>
 
     <label>Status :</label><br>
-    <input type="text" name="status" value="{{ selected.status.value }}" readonly><br><br>
+    <input type="text" name="status" value="{{ selected.status }}" readonly><br><br>
 
     <button type="submit">Créer le compte</button>
 </form>
