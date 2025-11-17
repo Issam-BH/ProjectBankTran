@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +16,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 final class AdminController extends AbstractController
 {
     #[Route('/admin', name: 'app_admin')]
-    public function index(Request $request, Connection $connection,UserPasswordHasherInterface $userPasswordHasher): Response
+    public function index(Request $request, Connection $connection, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
     {
         $message = null;
 
@@ -33,13 +34,17 @@ final class AdminController extends AbstractController
         }
 
         if ($request->isMethod('POST')) {
-
-            $user = new User();
-            $user->setPassword
-
             $username = $request->request->get('username');
             $password = $request->request->get('password');
             $requestId = $request->request->get('request_id');
+
+            $user = new User();
+            $user->setUsername($username);
+            $user->setRoles(["ROLE_COMMERCANT"]);
+            $user->setPassword($userPasswordHasher->hashPassword($user, $password));
+
+            $entityManager->persist($user);
+            $entityManager->flush();
 
             $connection->insert('user', [
                 'username' => $username,
