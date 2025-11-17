@@ -19,5 +19,16 @@ services:
     ports:
       - 3306:3306
 
+  pma:
+    image: phpmyadmin:apache
+    restart: unless-stopped
+    depends_on:
+      - database
+    environment:
+      PMA_HOST: database
+      PMA_ABSOLUTE_URI: http://127.0.0.1:8888
+      TZ: Europe/Paris
+    ports:
+      - 8888:80
 volumes:
   database_data:
