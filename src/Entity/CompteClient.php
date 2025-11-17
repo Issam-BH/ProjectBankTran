@@ -30,6 +30,9 @@ class CompteClient
     #[ORM\OneToMany(targetEntity: Transaction::class, mappedBy: 'compte_client', orphanRemoval: true)]
     private Collection $transactions;
 
+    #[ORM\OneToOne(inversedBy: 'compteClient', cascade: ['persist', 'remove'])]
+    private ?User $user = null;
+
     public function __construct()
     {
         $this->transactions = new ArrayCollection();
@@ -102,6 +105,18 @@ class CompteClient
                 $transaction->setCompteClient(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
 
         return $this;
     }

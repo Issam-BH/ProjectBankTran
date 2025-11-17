@@ -34,6 +34,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?string $password = null;
 
+    #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    private ?CompteClient $compteClient = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -113,5 +116,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // @deprecated, to be removed when upgrading to Symfony 8
+    }
+
+    public function getCompteClient(): ?CompteClient
+    {
+        return $this->compteClient;
+    }
+
+    public function setCompteClient(?CompteClient $compteClient): static
+    {
+        // unset the owning side of the relation if necessary
+        if ($compteClient === null && $this->compteClient !== null) {
+            $this->compteClient->setUser(null);
+        }
+
+        // set the owning side of the relation if necessary
+        if ($compteClient !== null && $compteClient->getUser() !== $this) {
+            $compteClient->setUser($this);
+        }
+
+        $this->compteClient = $compteClient;
+
+        return $this;
     }
 }
