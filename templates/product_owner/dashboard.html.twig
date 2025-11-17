@@ -14,7 +14,6 @@
                 <tr>
                     <th>ID</th>
                     <th>Username</th>
-                    <th>Email</th>
                 </tr>
             </thead>
             <tbody>
@@ -22,7 +21,6 @@
                     <tr>
                         <td>{{ compte.id }}</td>
                         <td>{{ compte.username }}</td>
-                        <td>{{ compte.email }}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -46,12 +44,12 @@
 
     <form method="post" style="max-width:400px;">
         <div style="margin-bottom:10px;">
-            <label for="username">Username :</label><br>
+            <label for="username">Nom Entreprise :</label><br>
             <input type="text" name="username" id="username" required>
         </div>
 
         <div style="margin-bottom:10px;">
-            <label for="password">Password :</label><br>
+            <label for="password">Numéro Siret :</label><br>
             <input type="password" name="password" id="password" required>
         </div>
 

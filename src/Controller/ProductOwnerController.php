@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\User;
 use App\Entity\CompteClient;
 use App\Entity\PoRequestAccount;
 use App\Config\PoAccountRequestAction;
@@ -30,7 +31,7 @@ final class ProductOwnerController extends AbstractController
         #[Route('/product-owner/dashboard', name: 'app_product_owner_dashboard')]
     public function dashboard(EntityManagerInterface $entityManager,Request $request): Response
     {
-        $comptes = $entityManager->getRepository(CompteClient::class)->findAll();
+        $comptes = $entityManager->createQuery('SELECT u FROM App\Entity\User u WHERE u.roles LIKE :role')->setParameter('role', '%ROLE_COMMERCANT%')->getResult();
         $message = null;
 
         if ($request->isMethod('POST')) {

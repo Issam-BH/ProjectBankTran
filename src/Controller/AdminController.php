@@ -46,17 +46,11 @@ final class AdminController extends AbstractController
             $entityManager->persist($user);
             $entityManager->flush();
 
-            $connection->insert('user', [
-                'username' => $username,
-                'password' => $userPasswordHasher->hashPassword($username, $password),
-                'roles' => '["ROLE_COMMERCANT"]'
-            ]);
-
-            $connection->update('po_requests', [
+            $connection->update('po_request_account', [
                 'status' => 'done'
             ], ['id' => $requestId]);
 
-            $message = "✅ Le compte client <strong>$clientName</strong> a été créé.";
+            $message = "✅ Le compte client <strong>$username</strong> a été créé.";
         }
 
         return $this->render('admin/index.html.twig', [
