@@ -1,20 +1,52 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello AdminController!{% endblock %}
+{% block title %}Espace Admin{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+<h1>Espace Admin — Gestion des demandes PO</h1>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+{% if message %}
+    <div style="background-color:#ddf; padding:10px; margin-bottom:10px;">
+        {{ message|raw }}
+    </div>
+{% endif %}
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/home/mainuser/iut/ProjectBankTran/src/Controller/AdminController.php</code></li>
-        <li>Your template at <code>/home/mainuser/iut/ProjectBankTran/templates/admin/index.html.twig</code></li>
-    </ul>
-</div>
+{# Sélection de la demande PO #}
+<form method="get" action="{{ path('app_admin') }}">
+    <label><strong>Demandes du Product Owner :</strong></label>
+    <select name="request_id" onchange="this.form.submit()">
+        <option value="">-- Sélectionner une demande --</option>
+        {% for req in requests %}
+            <option value="{{ req.id }}"
+                {% if selected and selected.id == req.id %}selected{% endif %}
+            >
+                {{ req.username }} — {{ req.action.value }}
+            </option>
+        {% endfor %}
+    </select>
+</form>
+
+<hr>
+
+{# Formulaire de création du compte client pour la demande sélectionnée #}
+{% if selected %}
+<form method="post">
+    <input type="hidden" name="request_id" value="{{ selected.id }}">
+
+    <label>Username :</label><br>
+    <input type="text" name="username" value="{{ selected.username }}" required><br><br>
+
+    <label>Password :</label><br>
+    <input type="password" name="password" value="{{ selected.password }}" required><br><br>
+
+    <label>Action :</label><br>
+    <input type="text" name="action" value="{{ selected.action.value }}" readonly><br><br>
+
+    <label>Status :</label><br>
+    <input type="text" name="status" value="{{ selected.status.value }}" readonly><br><br>
+
+    <button type="submit">Créer le compte</button>
+</form>
+{% endif %}
+
 {% endblock %}
