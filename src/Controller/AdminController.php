@@ -3,19 +3,23 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\CompteClient;
+use App\Form\UserType;
+use App\Repository\UserRepository;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[IsGranted('ROLE_ADMIN')]
+#[Route('/admin')]
 final class AdminController extends AbstractController
 {
-    #[Route('/admin', name: 'app_admin')]
+    #[Route('', name: 'app_admin')]
     public function index(Request $request, Connection $connection, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
     {
         $message = null;
@@ -33,7 +37,7 @@ final class AdminController extends AbstractController
             );
         }
 
-        if ($request->isMethod('POST')) {
+        if ($request->isMethod('POST') && $request->request->has('request_id')) {
             $username = $request->request->get('username');
             $password = $request->request->get('password');
             $requestId = $request->request->get('request_id');
@@ -44,6 +48,15 @@ final class AdminController extends AbstractController
             $user->setPassword($userPasswordHasher->hashPassword($user, $password));
 
             $entityManager->persist($user);
+
+            $compte = new CompteClient();
+            $compte->setLabel("Compte de " . $username);
+            $compte->setNumeroSiren($password);
+            $compte->setDevise("EUR");
+            $compte->setUser($user);
+
+            $entityManager->persist($compte);
+
             $entityManager->flush();
 
             $connection->update('po_request_account', [
@@ -59,5 +72,52 @@ final class AdminController extends AbstractController
             'selected'       => $selected,
             'message'        => $message
         ]);
+    }
+
+    #[Route('/users', name: 'app_admin_users')]
+    public function userList(UserRepository $userRepository): Response
+    {
+        $users = $userRepository->findBy([], ['username' => 'ASC']);
+        return $this->render('admin/users.html.twig', ['users' => $users]);
+    }
+
+    #[Route('/users/create', name: 'app_admin_user_create')]
+    public function userCreate(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): Response
+    {
+        $user = new User();
+        $form = $this->createForm(UserType::class, $user, ['new_user' => true]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $plainPassword = $form->get('plainPassword')->getData();
+            $user->setPassword($passwordHasher->hashPassword($user, $plainPassword));
+            $entityManager->persist($user);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Utilisateur créé avec succès.');
+            return $this->redirectToRoute('app_admin_users');
+        }
+
+        return $this->render('admin/user_form.html.twig', [
+            'form' => $form->createView(),
+            'is_new' => true,
+        ]);
+    }
+
+    #[Route('/users/{id}/delete', name: 'app_admin_user_delete', methods: ['POST'])]
+    public function userDelete(User $user, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
+            // Prevent admin from deleting themselves
+            if ($this->getUser() === $user) {
+                $this->addFlash('error', 'Vous не pouvez pas supprimer votre propre compte.');
+                return $this->redirectToRoute('app_admin_users');
+            }
+            $entityManager->remove($user);
+            $entityManager->flush();
+            $this->addFlash('success', 'Utilisateur supprimé avec succès.');
+        }
+
+        return $this->redirectToRoute('app_admin_users');
     }
 }

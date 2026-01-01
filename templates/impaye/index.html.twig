@@ -1,20 +1,118 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello ImpayeController!{% endblock %}
+{% block title %}Liste des Impayés{% endblock %}
+
+{% macro color_by_amount(amount) %}
+    {% set abs_amount = amount|abs %}
+    {% if abs_amount <= 100 %}
+        table-warning
+    {% elseif abs_amount <= 500 %}
+        table-danger
+    {% else %}
+        table-dark text-white
+    {% endif %}
+{% endmacro %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+<div class="container mt-4">
+    <div class="mb-3">
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_admin') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour au Dashboard</a>
+        {% elseif is_granted('ROLE_PO') %}
+            <a href="{{ path('app_product_owner') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour au Dashboard</a>
+        {% elseif is_granted('ROLE_COMMERCANT') %}
+            <a href="{{ path('app_commercant') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour au Dashboard</a>
+        {% endif %}
+    </div>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+    <h1 class="mb-4">Liste des Impayés</h1>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/home/mainuser/iut/ProjectBankTran/src/Controller/ImpayeController.php</code></li>
-        <li>Your template at <code>/home/mainuser/iut/ProjectBankTran/templates/impaye/index.html.twig</code></li>
-    </ul>
+    {% if is_granted('ROLE_COMMERCANT') and not is_granted('ROLE_PO') and not is_granted('ROLE_ADMIN') %}
+        {# View for Commercant #}
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="start_date" class="form-label">Date de début</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ startDate }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="end_date" class="form-label">Date de fin</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ endDate }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sort" class="form-label">Trier par montant</label>
+                        <select class="form-select" id="sort" name="sort">
+                            <option value="DESC" {% if sort == 'DESC' %}selected{% endif %}>Décroissant</option>
+                            <option value="ASC" {% if sort == 'ASC' %}selected{% endif %}>Croissant</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">Filtrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Libellé</th>
+                                <th>Date</th>
+                                <th class="text-end">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for impaye in impayes %}
+                                <tr class="{{ _self.color_by_amount(impaye.value) }}">
+                                    <td>{{ impaye.label }}</td>
+                                    <td>{{ impaye.createdAt|date('d/m/Y H:i') }}</td>
+                                    <td class="text-end fw-bold">{{ impaye.value|number_format(2, ',', ' ') }} {{ impaye.compteClient.devise }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4">Aucun impayé trouvé pour la période sélectionnée.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    {% elseif is_granted('ROLE_PO') %}
+        {# View for PO/Admin #}
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>N° SIREN</th>
+                                <th>Compte</th>
+                                <th class="text-end">Total des Impayés</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in impayesBySiren %}
+                                <tr>
+                                    <td>{{ item.numero_siren }}</td>
+                                    <td>{{ item.label }}</td>
+                                    <td class="text-end fw-bold text-danger">{{ item.totalImpayes|number_format(2, ',', ' ') }} {{ item.devise }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4">Aucun impayé trouvé.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

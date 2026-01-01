@@ -1,20 +1,148 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello CommercantController!{% endblock %}
+{% block title %}Mon Compte Commerçant{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+<div class="container mt-4">
+    <h1>Tableau de bord Commerçant</h1>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h5 class="card-title"><i class="bi bi-collection fs-2"></i><br>Gestion des remises</h5>
+                    <p class="card-text">Consultez et gérez vos remises de transactions.</p>
+                    <a href="{{ path('app_remise') }}" class="btn btn-primary mt-auto">Accéder</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h5 class="card-title"><i class="bi bi-exclamation-triangle fs-2"></i><br>Suivi des impayés</h5>
+                    <p class="card-text">Recherchez et triez vos transactions impayées.</p>
+                    <a href="{{ path('app_impaye') }}" class="btn btn-primary mt-auto">Accéder</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h5 class="card-title"><i class="bi bi-pie-chart fs-2"></i><br>Rapports et statistiques</h5>
+                    <p class="card-text">Visualisez l'évolution de vos impayés sous forme de graphiques.</p>
+                    <a href="{{ path('app_rapport') }}" class="btn btn-primary mt-auto">Accéder</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                    <h5 class="card-title"><i class="bi bi-cash-coin fs-2"></i><br>Saisir transaction</h5>
+                    <p class="card-text">Enregistrez une nouvelle transaction manuellement.</p>
+                    <a href="{{ path('app_transaction_new') }}" class="btn btn-primary mt-auto">Accéder</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/home/mainuser/iut/ProjectBankTran/src/Controller/CommercantController.php</code></li>
-        <li>Your template at <code>/home/mainuser/iut/ProjectBankTran/templates/commercant/index.html.twig</code></li>
-    </ul>
+    {% if compte %}
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Solde Global</h5>
+                        <p class="card-text h2 {% if compte.balance < 0 %}text-danger{% endif %}">
+                            {{ compte.balance|number_format(2, ',', ' ') }} {{ compte.devise }}
+                        </p>
+                        <p class="text-muted small">SIREN: {{ compte.numeroSiren }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Évolution de la Trésorerie</h5>
+                        <canvas id="treasuryChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Dernières Transactions</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover mt-3">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Libellé</th>
+                                <th class="text-end">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in compte.transactions|sort((a, b) => b.createdAt <=> a.createdAt)|slice(0, 10) %}
+                                <tr>
+                                    <td>{{ transaction.createdAt|date('d/m/Y H:i') }}</td>
+                                    <td>{{ transaction.label }}</td>
+                                    <td class="text-end {% if transaction.value < 0 %}text-danger{% endif %}">
+                                        {{ transaction.value|number_format(2, ',', ' ') }} {{ compte.devise }}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center">Aucune transaction trouvée.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-warning mt-4">
+            Aucun compte associé à votre profil. Veuillez contacter un administrateur.
+        </div>
+    {% endif %}
 </div>
+
+{% if compte %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('treasuryChart').getContext('2d');
+    
+    {# Prepare data for Chart.js #}
+    {% set balance_evolution = [] %}
+    {% set current_running_balance = 0 %}
+    {% set labels = [] %}
+    
+    {% for transaction in compte.transactions|sort((a, b) => a.createdAt <=> b.createdAt) %}
+        {% set current_running_balance = current_running_balance + transaction.value %}
+        {% set labels = labels|merge([transaction.createdAt|date('d/m/Y')]) %}
+        {% set balance_evolution = balance_evolution|merge([current_running_balance]) %}
+    {% endfor %}
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ labels|json_encode|raw }},
+            datasets: [{
+                label: 'Solde ({{ compte.devise }})',
+                data: {{ balance_evolution|json_encode|raw }},
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}

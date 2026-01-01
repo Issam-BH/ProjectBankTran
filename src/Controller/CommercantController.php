@@ -13,8 +13,12 @@ final class CommercantController extends AbstractController
     #[Route('/commercant', name: 'app_commercant')]
     public function index(): Response
     {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+        $compte = $user->getCompteClient();
+
         return $this->render('commercant/index.html.twig', [
-            'controller_name' => 'CommercantController',
+            'compte' => $compte,
         ]);
     }
 }

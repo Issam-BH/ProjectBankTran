@@ -3,44 +3,82 @@
 {% block title %}Log in!{% endblock %}
 
 {% block body %}
-    <form method="post">
-        {% if error %}
-            <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
-        {% endif %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Sign In</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% if error %}
+                            <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+                        {% endif %}
 
-        {% if app.user %}
-            <div class="mb-3">
-                You are logged in as {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}">Logout</a>
+                        {% if app.user %}
+                            <div class="alert alert-info mb-3">
+                                You are logged in as {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}">Logout</a>
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" value="{{ last_username }}" name="_username" id="username" class="form-control" autocomplete="username" required autofocus>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <input type="password" name="_password" id="password" class="form-control" autocomplete="current-password" required>
+                                <button class="btn btn-outline-secondary" type="button" id="show-password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
+
+                        {#
+                            Uncomment this section and add a remember_me option below your firewall to activate remember me functionality.
+                            See https://symfony.com/doc/current/security/remember_me.html
+
+                            <div class="checkbox mb-3">
+                                <input type="checkbox" name="_remember_me" id="_remember_me">
+                                <label for="_remember_me">Remember me</label>
+                            </div>
+                        #}
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button class="btn btn-primary btn-lg" type="submit">
+                                Sign in
+                            </button>
+                            <a href="{{ path('app_register') }}" class="btn btn-outline-secondary">Don't have an account? Register</a>
+                        </div>
+                    </form>
+                </div>
             </div>
-        {% endif %}
+        </div>
+    </div>
+</div>
 
-        <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-        <label for="username">Username</label>
-        <input type="text" value="{{ last_username }}" name="_username" id="username" class="form-control" autocomplete="username" required autofocus>
-        <label for="password">Password</label>
-        <input type="password" name="_password" id="password" class="form-control" autocomplete="current-password" required>
-        <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
-        <button id="show-password" type="button">Afficher le mot de passe</button>
-        {#
-            Uncomment this section and add a remember_me option below your firewall to activate remember me functionality.
-            See https://symfony.com/doc/current/security/remember_me.html
-
-            <div class="checkbox mb-3">
-                <input type="checkbox" name="_remember_me" id="_remember_me">
-                <label for="_remember_me">Remember me</label>
-            </div>
-        #}
-
-        <button class="btn btn-lg btn-primary" type="submit">
-            Sign in
-        </button>
-    </form>
 <script>
-const password = document.getElementById('password')
-const showPassword = document.getElementById('show-password')
+document.addEventListener('DOMContentLoaded', () => {
+    const password = document.getElementById('password')
+    const showPassword = document.getElementById('show-password')
+    const eyeIcon = showPassword.querySelector('i')
 
-showPassword.addEventListener('click', () => {
-    password.type = password.type === 'password' ? 'text' : 'password'
+    showPassword.addEventListener('click', () => {
+        if (password.type === 'password') {
+            password.type = 'text'
+            eyeIcon.classList.remove('bi-eye')
+            eyeIcon.classList.add('bi-eye-slash')
+        } else {
+            password.type = 'password'
+            eyeIcon.classList.remove('bi-eye-slash')
+            eyeIcon.classList.add('bi-eye')
+        }
+    })
 })
 </script>
 {% endblock %}

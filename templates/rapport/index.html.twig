@@ -1,20 +1,69 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello RapportController!{% endblock %}
+{% block title %}Rapports sur les Impayés{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+<div class="container mt-4"
+    {{ stimulus_controller('charts', {
+        data: chartData,
+        labels: motifsLabels
+    }) }}
+>
+    <div class="mb-3">
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('app_admin') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour au Dashboard</a>
+        {% elseif is_granted('ROLE_PO') %}
+            <a href="{{ path('app_product_owner') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour au Dashboard</a>
+        {% elseif is_granted('ROLE_COMMERCANT') %}
+            <a href="{{ path('app_commercant') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Retour au Dashboard</a>
+        {% endif %}
+    </div>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Rapports sur les Impayés</h1>
+        {% if is_granted('ROLE_COMMERCANT') and not is_granted('ROLE_PO') %}
+        <button class="btn btn-secondary" data-action="charts#exportPdf">
+            <i class="bi bi-download"></i> Exporter en PDF
+        </button>
+        {% endif %}
+    </div>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/home/mainuser/iut/ProjectBankTran/src/Controller/RapportController.php</code></li>
-        <li>Your template at <code>/home/mainuser/iut/ProjectBankTran/templates/rapport/index.html.twig</code></li>
-    </ul>
+    <div id="charts-container">
+        {% if is_granted('ROLE_COMMERCANT') and not is_granted('ROLE_PO') and not is_granted('ROLE_ADMIN') %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Évolution du Chiffre d'Affaires vs. Impayés (12 derniers mois)</h5>
+                </div>
+                <div class="card-body">
+                    <div class="btn-group mb-3" role="group">
+                        <button type="button" class="btn btn-outline-primary active" data-action="charts#changeEvolutionChartType" data-chart-type="bar">Histogramme</button>
+                        <button type="button" class="btn btn-outline-primary" data-action="charts#changeEvolutionChartType" data-chart-type="line">Courbe</button>
+                    </div>
+                    <div style="height: 500px">
+                        <canvas data-charts-target="evolutionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Répartition des Impayés par Motif</h5>
+                </div>
+                <div class="card-body">
+                    <canvas data-charts-target="motifsChart" style="max-height: 400px;"></canvas>
+                </div>
+            </div>
+
+        {% elseif is_granted('ROLE_PO') %}
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Répartition des Impayés par Motif (Tous les comptes)</h5>
+                </div>
+                <div class="card-body">
+                     <canvas data-charts-target="motifsChart" style="max-height: 400px;"></canvas>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

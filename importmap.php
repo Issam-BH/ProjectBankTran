@@ -25,4 +25,31 @@ return [
     '@hotwired/turbo' => [
         'version' => '7.3.0',
     ],
+    'chart.js/auto' => [
+        'version' => '4.5.1',
+    ],
+    '@kurkle/color' => [
+        'version' => '0.3.4',
+    ],
+    'jspdf' => [
+        'version' => '3.0.4',
+    ],
+    '@babel/runtime/helpers/typeof' => [
+        'version' => '7.28.4',
+    ],
+    'fflate' => [
+        'version' => '0.8.2',
+    ],
+    '@babel/runtime/helpers/slicedToArray' => [
+        'version' => '7.28.4',
+    ],
+    'fast-png' => [
+        'version' => '6.4.0',
+    ],
+    'iobuffer' => [
+        'version' => '5.4.0',
+    ],
+    'pako' => [
+        'version' => '2.1.0',
+    ],
 ];

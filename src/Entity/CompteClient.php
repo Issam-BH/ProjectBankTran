@@ -30,12 +30,19 @@ class CompteClient
     #[ORM\OneToMany(targetEntity: Transaction::class, mappedBy: 'compte_client', orphanRemoval: true)]
     private Collection $transactions;
 
+    /**
+     * @var Collection<int, Remise>
+     */
+    #[ORM\OneToMany(targetEntity: Remise::class, mappedBy: 'compteClient')]
+    private Collection $remises;
+
     #[ORM\OneToOne(inversedBy: 'compteClient', cascade: ['persist', 'remove'])]
     private ?User $user = null;
 
     public function __construct()
     {
         $this->transactions = new ArrayCollection();
+        $this->remises = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -109,6 +116,36 @@ class CompteClient
         return $this;
     }
 
+    /**
+     * @return Collection<int, Remise>
+     */
+    public function getRemises(): Collection
+    {
+        return $this->remises;
+    }
+
+    public function addRemise(Remise $remise): static
+    {
+        if (!$this->remises->contains($remise)) {
+            $this->remises->add($remise);
+            $remise->setCompteClient($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRemise(Remise $remise): static
+    {
+        if ($this->remises->removeElement($remise)) {
+            // set the owning side to null (unless already changed)
+            if ($remise->getCompteClient() === $this) {
+                $remise->setCompteClient(null);
+            }
+        }
+
+        return $this;
+    }
+
     public function getUser(): ?User
     {
         return $this->user;
@@ -119,5 +156,14 @@ class CompteClient
         $this->user = $user;
 
         return $this;
+    }
+
+    public function getBalance(): float
+    {
+        $balance = 0.0;
+        foreach ($this->transactions as $transaction) {
+            $balance += (float) $transaction->getValue();
+        }
+        return $balance;
     }
 }

@@ -16,6 +16,18 @@ class TransactionRepository extends ServiceEntityRepository
         parent::__construct($registry, Transaction::class);
     }
 
+    public function findAvailableForRemise(\App\Entity\CompteClient $compte): array
+    {
+        return $this->createQueryBuilder('t')
+            ->where('t.compte_client = :compte')
+            ->andWhere('t.remise IS NULL')
+            ->andWhere('t.value > 0')
+            ->setParameter('compte', $compte)
+            ->orderBy('t.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
     //    /**
     //     * @return Transaction[] Returns an array of Transaction objects
     //     */

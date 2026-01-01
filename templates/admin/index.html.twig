@@ -3,50 +3,65 @@
 {% block title %}Espace Admin{% endblock %}
 
 {% block body %}
-<h1>Espace Admin — Gestion des demandes PO</h1>
-
-{% if message %}
-    <div style="background-color:#ddf; padding:10px; margin-bottom:10px;">
-        {{ message|raw }}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Espace Admin</h1>
+        <a href="{{ path('app_admin_users') }}" class="btn btn-info">
+            <i class="bi bi-people"></i> Gestion des utilisateurs
+        </a>
     </div>
-{% endif %}
+    
+    <h2 class="h4 mb-3">Gestion des demandes PO</h2>
 
-{# Sélection de la demande PO #}
-<form method="get" action="{{ path('app_admin') }}">
-    <label><strong>Demandes du Product Owner :</strong></label>
-    <select name="request_id" onchange="this.form.submit()">
-        <option value="">-- Sélectionner une demande --</option>
-        {% for req in requests %}
-            <option value="{{ req.id }}"
-                {% if selected and selected.id == req.id %}selected{% endif %}
-            >
-                {{ req.username }} — {{ req.action }}
-            </option>
-        {% endfor %}
-    </select>
-</form>
+    {% if message %}
+        <div class="alert alert-success">{{ message|raw }}</div>
+    {% endif %}
 
-<hr>
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="get" action="{{ path('app_admin') }}" class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="request_id" class="form-label fw-bold">Demandes du Product Owner :</label>
+                </div>
+                <div class="col-auto">
+                    <select name="request_id" id="request_id" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Sélectionner une demande --</option>
+                        {% for req in requests %}
+                            <option value="{{ req.id }}" {% if selected and selected.id == req.id %}selected{% endif %}>
+                                {{ req.username }} — {{ req.action }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
 
-{# Formulaire de création du compte client pour la demande sélectionnée #}
-{% if selected %}
-<form method="post">
-    <input type="hidden" name="request_id" value="{{ selected.id }}">
-
-    <label>Username :</label><br>
-    <input type="text" name="username" value="{{ selected.username }}" required><br><br>
-
-    <label>Password :</label><br>
-    <input type="password" name="password" value="{{ selected.password }}" required><br><br>
-
-    <label>Action :</label><br>
-    <input type="text" name="action" value="{{ selected.action }}" readonly><br><br>
-
-    <label>Status :</label><br>
-    <input type="text" name="status" value="{{ selected.status }}" readonly><br><br>
-
-    <button type="submit">Créer le compte</button>
-</form>
-{% endif %}
-
+            {% if selected %}
+            <hr class="my-4">
+            <h3 class="h5">Créer le compte client pour la demande sélectionnée</h3>
+            <form method="post">
+                <input type="hidden" name="request_id" value="{{ selected.id }}">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" value="{{ selected.username }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" value="{{ selected.password }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="action" class="form-label">Action</label>
+                        <input type="text" id="action" name="action" class="form-control" value="{{ selected.action }}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="status" class="form-label">Status</label>
+                        <input type="text" id="status" name="status" class="form-control" value="{{ selected.status }}" readonly>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Créer le compte</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
 {% endblock %}
