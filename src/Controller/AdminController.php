@@ -20,7 +20,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 final class AdminController extends AbstractController
 {
     #[Route('', name: 'app_admin')]
-    public function index(Request $request, Connection $connection, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
+    public function index(Request $request, Connection $connection, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager, UserRepository $userRepository): Response
     {
         $message = null;
 
@@ -38,39 +38,48 @@ final class AdminController extends AbstractController
         }
 
         if ($request->isMethod('POST') && $request->request->has('request_id')) {
-            $username = $request->request->get('username');
-            $password = $request->request->get('password');
             $requestId = $request->request->get('request_id');
+            $action = $request->request->get('action');
+            $entrepriseNom = $request->request->get('entreprise_nom');
 
-            $user = new User();
-            $user->setUsername($username);
-            $user->setRoles(["ROLE_COMMERCANT"]);
-            $user->setPassword($userPasswordHasher->hashPassword($user, $password));
+            if ($action === 'create') {
+                $adminUsername = $request->request->get('admin_username');
+                $adminPassword = $request->request->get('admin_password');
+                $siret = $request->request->get('siret');
 
-            $entityManager->persist($user);
+                $user = new User();
+                $user->setUsername($adminUsername);
+                $user->setRoles(["ROLE_COMMERCANT"]);
+                $user->setPassword($userPasswordHasher->hashPassword($user, $adminPassword));
+                $entityManager->persist($user);
 
-            $compte = new CompteClient();
-            $compte->setLabel("Compte de " . $username);
-            $compte->setNumeroSiren($password);
-            $compte->setDevise("EUR");
-            $compte->setUser($user);
+                $compte = new CompteClient();
+                $compte->setLabel($entrepriseNom);
+                $compte->setNumeroSiren($siret);
+                $compte->setDevise("EUR");
+                $compte->setUser($user);
+                $entityManager->persist($compte);
 
-            $entityManager->persist($compte);
+                $message = "✅ Le compte client <strong>$adminUsername</strong> a été créé pour l'entreprise $entrepriseNom.";
+            } else {
+                $userToDelete = $userRepository->findOneBy(['username' => $entrepriseNom]);
+                if ($userToDelete && $this->getUser() !== $userToDelete) {
+                    $entityManager->remove($userToDelete);
+                    $message = "✅ Le compte de <strong>$entrepriseNom</strong> a été supprimé.";
+                }
+            }
 
+            $connection->update('po_request_account', ['status' => 'done'], ['id' => $requestId]);
             $entityManager->flush();
-
-            $connection->update('po_request_account', [
-                'status' => 'done'
-            ], ['id' => $requestId]);
-
-            $message = "✅ Le compte client <strong>$username</strong> a été créé.";
+            
+            return $this->redirectToRoute('app_admin', ['message' => $message]);
         }
 
         return $this->render('admin/index.html.twig', [
             'controller_name' => 'AdminController',
             'requests'       => $poRequests,
             'selected'       => $selected,
-            'message'        => $message
+            'message'        => $request->query->get('message') ?? $message
         ]);
     }
 
@@ -108,9 +117,8 @@ final class AdminController extends AbstractController
     public function userDelete(User $user, Request $request, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$user->getId(), $request->request->get('_token'))) {
-            // Prevent admin from deleting themselves
             if ($this->getUser() === $user) {
-                $this->addFlash('error', 'Vous не pouvez pas supprimer votre propre compte.');
+                $this->addFlash('error', 'Vous ne pouvez pas supprimer votre propre compte.');
                 return $this->redirectToRoute('app_admin_users');
             }
             $entityManager->remove($user);

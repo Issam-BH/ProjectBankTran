@@ -14,7 +14,10 @@
     <h2 class="h4 mb-3">Gestion des demandes PO</h2>
 
     {% if message %}
-        <div class="alert alert-success">{{ message|raw }}</div>
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ message|raw }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     {% endif %}
 
     <div class="card shadow-sm">
@@ -28,7 +31,7 @@
                         <option value="">-- Sélectionner une demande --</option>
                         {% for req in requests %}
                             <option value="{{ req.id }}" {% if selected and selected.id == req.id %}selected{% endif %}>
-                                {{ req.username }} — {{ req.action }}
+                                {{ req.username }} — {{ req.action|upper }}
                             </option>
                         {% endfor %}
                     </select>
@@ -37,28 +40,40 @@
 
             {% if selected %}
             <hr class="my-4">
-            <h3 class="h5">Créer le compte client pour la demande sélectionnée</h3>
+            <h3 class="h5">Traitement de la demande : {{ selected.action|upper }}</h3>
             <form method="post">
                 <input type="hidden" name="request_id" value="{{ selected.id }}">
+                <input type="hidden" name="action" value="{{ selected.action }}">
+                
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label for="username" class="form-label">Username</label>
-                        <input type="text" id="username" name="username" class="form-control" value="{{ selected.username }}" required>
+                        <label class="form-label">Entreprise (transmis par PO)</label>
+                        <input type="text" name="entreprise_nom" class="form-control bg-light" value="{{ selected.username }}" readonly>
                     </div>
                     <div class="col-md-6">
-                        <label for="password" class="form-label">Password</label>
-                        <input type="password" id="password" name="password" class="form-control" value="{{ selected.password }}" required>
+                        <label class="form-label">SIRET (transmis par PO)</label>
+                        <input type="text" name="siret" class="form-control bg-light" value="{{ selected.password }}" readonly>
                     </div>
-                    <div class="col-md-6">
-                        <label for="action" class="form-label">Action</label>
-                        <input type="text" id="action" name="action" class="form-control" value="{{ selected.action }}" readonly>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="status" class="form-label">Status</label>
-                        <input type="text" id="status" name="status" class="form-control" value="{{ selected.status }}" readonly>
-                    </div>
+
+                    {% if selected.action == 'create' %}
+                        <div class="col-md-6">
+                            <label for="admin_username" class="form-label fw-bold text-primary">Username technique (Admin)</label>
+                            <input type="text" id="admin_username" name="admin_username" class="form-control border-primary" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="admin_password" class="form-label fw-bold text-primary">Mot de passe (Admin)</label>
+                            <input type="password" id="admin_password" name="admin_password" class="form-control border-primary" required>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <button type="submit" class="btn btn-primary">Créer le compte</button>
+                        </div>
+                    {% else %}
+                        <div class="col-12 mt-3">
+                            <div class="alert alert-warning">Confirmer la suppression pour l'entreprise <strong>{{ selected.username }}</strong>.</div>
+                            <button type="submit" class="btn btn-danger">Confirmer la suppression</button>
+                        </div>
+                    {% endif %}
                 </div>
-                <button type="submit" class="btn btn-primary mt-3">Créer le compte</button>
             </form>
             {% endif %}
         </div>
